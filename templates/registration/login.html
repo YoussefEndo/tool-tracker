@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Tool Calibration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            max-width: 420px;
+            width: 100%;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px 35px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-logo .icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border-radius: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .login-logo .icon i {
+            font-size: 2.5rem;
+            color: white;
+        }
+        
+        .login-logo h2 {
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+        
+        .login-logo p {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+        
+        .login-logo .highlight {
+            color: #4f46e5;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: #374151;
+        }
+        
+        .form-control {
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        
+        .form-control:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+        
+        .form-control-icon {
+            position: relative;
+        }
+        
+        .form-control-icon i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 1.1rem;
+        }
+        
+        .form-control-icon .form-control {
+            padding-left: 45px;
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-weight: 600;
+            font-size: 1rem;
+            color: white;
+            width: 100%;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(79, 70, 229, 0.35);
+            color: white;
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 12px 16px;
+        }
+        
+        .alert-danger {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+        
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+        
+        .login-footer a {
+            color: #4f46e5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .divider span {
+            padding: 0 15px;
+            color: #9ca3af;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .form-check-input:checked {
+            background-color: #4f46e5;
+            border-color: #4f46e5;
+        }
+        
+        .form-check-label {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 480px) {
+            .login-card { padding: 30px 20px; }
+            .login-logo h2 { font-size: 1.5rem; }
+            .login-logo .icon { width: 60px; height: 60px; }
+            .login-logo .icon i { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <div class="login-card">
+        
+        <!-- Logo -->
+        <div class="login-logo">
+            <div class="icon">
+                <i class="bi bi-tools"></i>
+            </div>
+            <h2>Tool <span class="highlight">Calibration</span></h2>
+            <p>Système de suivi d'étalonnage</p>
+        </div>
+        
+        <!-- Messages d'erreur -->
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Identifiants incorrects. Veuillez réessayer.
+            </div>
+        {% endif %}
+        
+        <!-- Formulaire -->
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label class="form-label">Nom d'utilisateur</label>
+                <div class="form-control-icon">
+                    <i class="bi bi-person"></i>
+                    <input type="text" name="username" class="form-control" placeholder="Entrez votre nom d'utilisateur" required autofocus>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Mot de passe</label>
+                <div class="form-control-icon">
+                    <i class="bi bi-lock"></i>
+                    <input type="password" name="password" class="form-control" placeholder="Entrez votre mot de passe" required>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                    <label class="form-check-label" for="remember">
+                        Se souvenir de moi
+                    </label>
+                </div>
+                <a href="#" style="font-size: 0.85rem; color: #4f46e5; text-decoration: none;">
+                    Mot de passe oublié ?
+                </a>
+            </div>
+            
+            <button type="submit" class="btn-login">
+                <i class="bi bi-box-arrow-in-right me-2"></i> Se connecter
+            </button>
+        </form>
+        
+        <!-- Footer -->
+        <div class="login-footer">
+            <p class="mb-0">
+                <i class="bi bi-shield-check me-1"></i>
+                Accès sécurisé · Contactez votre administrateur
+            </p>
+        </div>
+        
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

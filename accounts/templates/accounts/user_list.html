@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des utilisateurs - Tool Calibration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f0f4f8; }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #e94560;
+        }
+        .header h1 { color: white; font-weight: 800; font-size: 1.5rem; }
+        .header a { color: rgba(255,255,255,0.8); text-decoration: none; }
+        .header a:hover { color: white; }
+        .card-custom {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+        }
+        .stat-card-mini {
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            height: 100%;
+        }
+        .stat-card-mini .number { font-size: 1.5rem; font-weight: 700; }
+        .stat-card-mini .label { font-size: 0.7rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+            color: white;
+        }
+        .table th {
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b7280;
+        }
+        .action-cell .btn {
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        .action-cell .btn-success { background: #10b981; border: none; color: white; }
+        .action-cell .btn-success:hover { background: #059669; transform: scale(1.05); }
+        .action-cell .btn-primary { background: #4f46e5; border: none; color: white; }
+        .action-cell .btn-primary:hover { background: #4338ca; transform: scale(1.05); }
+        .action-cell .btn-danger { background: #ef4444; border: none; color: white; }
+        .action-cell .btn-danger:hover { background: #dc2626; transform: scale(1.05); }
+        .action-cell .btn-warning { background: #f59e0b; border: none; color: white; }
+        .action-cell .btn-warning:hover { background: #d97706; transform: scale(1.05); }
+        .pagination .page-link {
+            border-radius: 8px;
+            margin: 0 3px;
+            color: #4f46e5;
+            border: none;
+        }
+        .pagination .page-link:hover { background: #eef2ff; }
+        .pagination .page-item.active .page-link { background: #4f46e5; color: white; }
+        .pagination .page-item.disabled .page-link { color: #d1d5db; }
+        .badge-supervisor { background: #dbeafe; color: #1e40af; }
+        .badge-user { background: #f3f4f6; color: #374151; }
+        .badge-active { background: #d1fae5; color: #065f46; }
+        .badge-inactive { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="bi bi-people"></i> Gestion des utilisateurs</h1>
+                <p class="text-white-50 small mb-0">Bienvenue {{ user.username }}</p>
+            </div>
+            <div>
+                <a href="/" class="btn btn-outline-light btn-sm me-2">
+                    <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+                <a href="/admin/" class="btn btn-outline-light btn-sm me-2">
+                    <i class="bi bi-gear"></i> Admin
+                </a>
+                <a href="/accounts/logout/" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Statistiques rapides -->
+    <div class="row g-2 mb-4">
+        <div class="col-4 col-md-3">
+            <div class="stat-card-mini">
+                <div class="number text-primary">{{ total_users }}</div>
+                <div class="label">Total</div>
+            </div>
+        </div>
+        <div class="col-4 col-md-3">
+            <div class="stat-card-mini">
+                <div class="number text-success">{{ active_users }}</div>
+                <div class="label">Actifs</div>
+            </div>
+        </div>
+        <div class="col-4 col-md-3">
+            <div class="stat-card-mini">
+                <div class="number text-warning">{{ supervisors }}</div>
+                <div class="label">Supervisors</div>
+            </div>
+        </div>
+        <div class="col-4 col-md-3">
+            <a href="/accounts/create/" class="btn-primary-custom">
+                <i class="bi bi-plus-circle"></i> Ajouter
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="card card-custom mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-10">
+                    <input type="text" name="search" class="form-control rounded-3" placeholder="🔍 Rechercher par nom, email..." value="{{ search }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3">
+                        <i class="bi bi-search"></i> Rechercher
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des utilisateurs -->
+    <div class="card card-custom">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom d'utilisateur</th>
+                            <th>Email</th>
+                            <th>Prénom/Nom</th>
+                            <th>Rôle</th>
+                            <th>Statut</th>
+                            <th>Date d'inscription</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td><strong>{{ u.username }}</strong></td>
+                            <td>{{ u.email }}</td>
+                            <td>{{ u.first_name }} {{ u.last_name }}</td>
+                            <td>
+                                {% if u.is_superuser %}
+                                    <span class="badge badge-supervisor"><i class="bi bi-star-fill"></i> Supervisor</span>
+                                {% else %}
+                                    <span class="badge badge-user"><i class="bi bi-person"></i> User</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if u.is_active %}
+                                    <span class="badge badge-active"><i class="bi bi-check-circle"></i> Actif</span>
+                                {% else %}
+                                    <span class="badge badge-inactive"><i class="bi bi-x-circle"></i> Inactif</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ u.date_joined|date:"d/m/Y" }}</td>
+                            <td class="action-cell">
+                                <div class="d-flex gap-1 flex-wrap">
+                                    {% if u.id != request.user.id %}
+                                    <a href="/accounts/{{ u.id }}/toggle-active/" class="btn btn-warning btn-sm" title="Activer/Désactiver">
+                                        <i class="bi bi-power"></i>
+                                    </a>
+                                    {% endif %}
+                                    <a href="/accounts/{{ u.id }}/edit/" class="btn btn-primary btn-sm" title="Modifier">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% if u.id != request.user.id %}
+                                    <a href="/accounts/{{ u.id }}/delete/" class="btn btn-danger btn-sm" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="bi bi-people" style="font-size: 2rem;"></i>
+                                <p class="mt-2 text-muted">Aucun utilisateur trouvé</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if users.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if users.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ users.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i> Précédent
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="bi bi-chevron-left"></i> Précédent</span>
+                </li>
+            {% endif %}
+            
+            <li class="page-item disabled">
+                <span class="page-link">Page {{ users.number }} / {{ users.paginator.num_pages }}</span>
+            </li>
+            
+            {% if users.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ users.next_page_number }}{% if search %}&search={{ search }}{% endif %}">
+                        Suivant <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Suivant <i class="bi bi-chevron-right"></i></span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

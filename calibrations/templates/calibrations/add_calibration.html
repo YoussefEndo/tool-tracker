@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter une calibration - Tool Calibration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f0f4f8; }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #e94560;
+        }
+        .header h1 { color: white; font-weight: 800; font-size: 1.5rem; }
+        .header a { color: rgba(255,255,255,0.8); text-decoration: none; }
+        .header a:hover { color: white; }
+        .form-card {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        .form-card .card-header {
+            background: white;
+            border-bottom: 1px solid #f3f4f6;
+            padding: 16px 24px;
+            font-weight: 600;
+        }
+        .form-label { font-weight: 500; font-size: 0.9rem; color: #374151; }
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            padding: 10px 14px;
+            transition: all 0.2s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+        }
+        .btn-secondary {
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-weight: 600;
+        }
+        .tool-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+        .tool-info strong {
+            color: #4f46e5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="bi bi-check2-circle"></i> Enregistrer une calibration</h1>
+            </div>
+            <div>
+                <a href="/tools/"><i class="bi bi-arrow-left"></i> Retour à la liste</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="form-card card">
+                <div class="card-header">
+                    <i class="bi bi-tools text-primary me-2"></i> Calibration pour : <strong>{{ tool.name }}</strong>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <!-- Info outil -->
+                    <div class="tool-info">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted">N° série</small><br>
+                                <strong>{{ tool.serial_number }}</strong>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">Statut actuel</small><br>
+                                <span class="badge bg-primary">{{ tool.get_status_display }}</span>
+                            </div>
+                            <div class="col-md-6 mt-2">
+                                <small class="text-muted">Prochain étalonnage</small><br>
+                                <strong>{{ tool.next_calibration_date|date:"d/m/Y" }}</strong>
+                            </div>
+                            <div class="col-md-6 mt-2">
+                                <small class="text-muted">Emplacement</small><br>
+                                <strong>{{ tool.location|default:"N/A" }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Date de calibration *</label>
+                                <input type="date" name="calibration_date" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Prochaine date *</label>
+                                <input type="date" name="next_calibration_date" class="form-control" required>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Effectué par *</label>
+                                <input type="text" name="performed_by" class="form-control" required placeholder="Nom du technicien ou laboratoire">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Numéro de certificat</label>
+                                <input type="text" name="certificate_number" class="form-control" placeholder="Ex: CERT-2026-001">
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Résultat *</label>
+                                <select name="result" class="form-select" required>
+                                    <option value="">Sélectionner...</option>
+                                    <option value="pass">✅ Pass - Réussi</option>
+                                    <option value="fail">❌ Fail - Échoué</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Notes</label>
+                                <textarea name="notes" class="form-control" rows="3" placeholder="Commentaires sur la calibration..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg"></i> Enregistrer
+                            </button>
+                            <a href="/tools/" class="btn btn-secondary">
+                                <i class="bi bi-x-lg"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

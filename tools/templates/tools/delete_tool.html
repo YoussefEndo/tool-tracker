@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supprimer un outil - Tool Calibration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f0f4f8; }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #e94560;
+        }
+        .header h1 { color: white; font-weight: 800; font-size: 1.5rem; }
+        .header a { color: rgba(255,255,255,0.8); text-decoration: none; }
+        .header a:hover { color: white; }
+        .confirm-card {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+            overflow: hidden;
+            text-align: center;
+        }
+        .confirm-card .card-header {
+            background: #fef2f2;
+            border-bottom: 1px solid #fecaca;
+            padding: 20px 24px;
+            font-weight: 600;
+            color: #dc2626;
+        }
+        .btn-danger {
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3);
+        }
+        .btn-secondary {
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .tool-icon { font-size: 4rem; color: #dc2626; }
+        .alert-warning { border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="bi bi-trash"></i> Supprimer un outil</h1>
+            </div>
+            <div>
+                <a href="/tools/"><i class="bi bi-arrow-left"></i> Retour à la liste</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="confirm-card card">
+                <div class="card-header">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Confirmation de suppression
+                </div>
+                <div class="card-body p-4">
+                    
+                    <div class="tool-icon mb-3">
+                        <i class="bi bi-tools"></i>
+                    </div>
+                    
+                    <h5 class="mb-2">Êtes-vous sûr de vouloir supprimer cet outil ?</h5>
+                    
+                    <div class="alert alert-warning">
+                        <strong>{{ tool.name }}</strong><br>
+                        <small class="text-muted">N° série: {{ tool.serial_number }}</small>
+                    </div>
+                    
+                    <p class="text-danger small">
+                        <i class="bi bi-exclamation-circle"></i>
+                        Cette action est irréversible ! Toutes les données liées seront supprimées.
+                    </p>
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex gap-3 justify-content-center">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Confirmer
+                            </button>
+                            <a href="/tools/" class="btn btn-secondary">
+                                <i class="bi bi-x-lg"></i> Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
