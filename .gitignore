@@ -26,4 +26,9 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
-*.swo
+*.swovenv/
+*.pyc
+__pycache__/
+import.xls
+data.json
+.env.save

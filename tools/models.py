@@ -17,28 +17,54 @@ class Tool(models.Model):
         ('red', 'Rouge'),
     ]
 
-    # Informations principales
-    name = models.CharField(max_length=200)
-    serial_number = models.CharField(max_length=100, unique=True)
-    description = models.TextField(blank=True)
-    purchase_date = models.DateField(null=True, blank=True)
-    calibration_frequency_months = models.PositiveIntegerField(default=6)
-    next_calibration_date = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    alert_level = models.CharField(max_length=10, choices=ALERT_CHOICES, default='none')  # NOUVEAU
-    location = models.CharField(max_length=200, blank=True)
-
-    # Données Excel
-    manufacturer = models.CharField(max_length=200, blank=True, null=True)
-    tool_type = models.CharField(max_length=100, blank=True, null=True)
-    department = models.CharField(max_length=100, blank=True, null=True)
-    first_calibration_date = models.DateField(blank=True, null=True)
-    status_reception = models.CharField(max_length=100, blank=True, null=True)
-    validation_status = models.CharField(max_length=100, blank=True, null=True)  # AJOUTÉ
-    gpn = models.CharField(max_length=100, blank=True, null=True)
+    # ===== COLONNES EXCEL =====
+    lp = models.IntegerField(null=True, blank=True)
     internal_number = models.CharField(max_length=100, blank=True, null=True)
-    comments = models.TextField(blank=True, null=True)  # AJOUTÉ
-
+    gpn = models.CharField(max_length=100, blank=True, null=True)
+    tool_type = models.CharField(max_length=100, blank=True, null=True)
+    tool_index = models.CharField(max_length=50, blank=True, null=True)
+    number = models.CharField(max_length=100, unique=True)
+    description = models.CharField(max_length=500, blank=True, null=True)
+    manufacturer = models.CharField(max_length=200, blank=True, null=True)
+    tool_description = models.TextField(blank=True, null=True)
+    connector_number = models.CharField(max_length=100, blank=True, null=True)
+    first_calibration = models.DateField(blank=True, null=True)
+    next_calibration_date = models.DateField()
+    department = models.CharField(max_length=200, blank=True, null=True)
+    calibration_tracability = models.TextField(blank=True, null=True)
+    reception_tracability = models.TextField(blank=True, null=True)
+    name_surname = models.CharField(max_length=200, blank=True, null=True)
+    location = models.CharField(max_length=200, blank=True, null=True)
+    comments = models.TextField(blank=True, null=True)
+    order_no = models.CharField(max_length=100, blank=True, null=True)
+    status_reception = models.CharField(max_length=100, blank=True, null=True)
+    validation_status = models.CharField(max_length=100, blank=True, null=True)
+    
+    # ===== CHAMPS SYSTÈME =====
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    alert_level = models.CharField(max_length=10, choices=ALERT_CHOICES, default='none')
+    calibration_frequency_months = models.PositiveIntegerField(default=6)
+    
+    # ===== NOUVEAUX CHAMPS POUR LES FICHIERS PDF =====
+    calibration_pdf = models.FileField(upload_to='calibration_pdfs/%Y/%m/', blank=True, null=True)
+    reception_pdf = models.FileField(upload_to='reception_pdfs/%Y/%m/', blank=True, null=True)
+    calibration_pdf_uploaded_at = models.DateTimeField(blank=True, null=True)
+    reception_pdf_uploaded_at = models.DateTimeField(blank=True, null=True)
+    calibration_pdf_uploaded_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='calibration_pdf_uploads'
+    )
+    reception_pdf_uploaded_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='reception_pdf_uploads'
+    )
+    
     # Audit
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='tools_created')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -48,14 +74,12 @@ class Tool(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.name} ({self.serial_number})"
+        return f"{self.description} ({self.number})"
 
     @property
     def alert_status(self):
-        """Calcule le niveau d'alerte basé sur la date du prochain étalonnage"""
         today = date.today()
         delta = (self.next_calibration_date - today).days
-
         if delta < 0:
             return 'overdue'
         elif delta <= 7:
@@ -68,7 +92,6 @@ class Tool(models.Model):
             return 'none'
 
     def update_alert_level(self):
-        """Met à jour le champ alert_level basé sur alert_status"""
         self.alert_level = self.alert_status
         self.save(update_fields=['alert_level'])
 
@@ -79,20 +102,62 @@ class ToolHistory(models.Model):
         ('updated', 'Updated'),
         ('calibrated', 'Calibrated'),
         ('status_changed', 'Status Changed'),
-        ('deleted', 'Deleted'),  # AJOUTÉ
+        ('deleted', 'Deleted'),
+        ('calibration_tracability_uploaded', 'Calibration Tracability Uploaded'),
+        ('reception_tracability_uploaded', 'Reception Tracability Uploaded'),
+        ('calibration_tracability_deleted', 'Calibration Tracability Deleted'),
+        ('reception_tracability_deleted', 'Reception Tracability Deleted'),
     ]
 
     tool = models.ForeignKey(Tool, on_delete=models.CASCADE, related_name='history')
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
-    field_name = models.CharField(max_length=100, blank=True, null=True)  # AJOUTÉ
-    old_value = models.TextField(blank=True, null=True)  # AJOUTÉ
-    new_value = models.TextField(blank=True, null=True)  # AJOUTÉ
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    field_name = models.CharField(max_length=100, blank=True, null=True)
+    old_value = models.TextField(blank=True, null=True)
+    new_value = models.TextField(blank=True, null=True)
     description = models.TextField()
+    
+    # ===== NOUVEAUX CHAMPS POUR LES FICHIERS =====
+    file_name = models.CharField(max_length=255, blank=True, null=True)
+    file_url = models.CharField(max_length=500, blank=True, null=True)
+    
+    # ===== CHAMPS POUR LE SUIVI =====
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    user_agent = models.CharField(max_length=255, blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['tool', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['action']),
+        ]
 
     def __str__(self):
-        return f"{self.action} on {self.tool.name} by {self.user}"
+        user_name = self.user.username if self.user else 'Système'
+        return f"{self.get_action_display()} - {self.tool.description} par {user_name}"
+
+    @classmethod
+    def log_action(cls, tool, user, action, description, field_name=None, old_value=None, new_value=None, file_name=None, file_url=None, request=None):
+        """Méthode utilitaire pour créer un log facilement"""
+        ip_address = None
+        user_agent = None
+        if request:
+            ip_address = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))
+            user_agent = request.META.get('HTTP_USER_AGENT', '')
+        
+        return cls.objects.create(
+            tool=tool,
+            user=user,
+            action=action,
+            field_name=field_name,
+            old_value=old_value,
+            new_value=new_value,
+            description=description,
+            file_name=file_name,
+            file_url=file_url,
+            ip_address=ip_address,
+            user_agent=user_agent
+        )

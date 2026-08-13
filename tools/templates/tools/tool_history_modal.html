@@ -1,90 +1,435 @@
-<div class="row">
-    <div class="col-md-12">
-        <h6>{{ data.tool.name }}</h6>
-        <p class="text-muted small">
-            N° série: {{ data.tool.serial_number }} | 
-            Statut: {{ data.tool.status }} | 
-            Emplacement: {{ data.tool.location }}
-        </p>
-    </div>
-</div>
-
-<div class="row mb-3">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>{{ data.stats.total_calibrations }}</h5>
-                <small class="text-muted">Total calibrations</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>{{ data.stats.last_calibration }}</h5>
-                <small class="text-muted">Dernière calibration</small>
-            </div>
-        </div>
-    </div>
-</div>
-
-<h6 class="mt-3"><i class="bi bi-list-ul"></i> Chronologie</h6>
-<div class="timeline" style="max-height: 400px; overflow-y: auto;">
-    {% for event in data.timeline %}
-    <div class="d-flex mb-3">
-        <div class="flex-shrink-0">
-            <span class="badge bg-primary me-2">{{ event.date|date:"d/m/Y H:i" }}</span>
-        </div>
-        <div>
-            <strong>
-                {% if event.type == 'calibration' %}
-                    <span class="badge bg-success">✅ Calibration</span>
-                {% elif event.type == 'created' %}
-                    <span class="badge bg-info">📝 Création</span>
-                {% elif event.type == 'updated' %}
-                    <span class="badge bg-warning text-dark">✏️ Modification</span>
-                {% elif event.type == 'status_changed' %}
-                    <span class="badge bg-secondary">🔄 Changement statut</span>
-                {% elif event.type == 'calibrated' %}
-                    <span class="badge bg-success">✅ Calibration</span>
-                {% else %}
-                    <span class="badge bg-light text-dark">{{ event.type }}</span>
-                {% endif %}
-            </strong>
-            {% if event.type == 'calibration' %}
-                <div>
-                    Résultat: <span class="badge {% if event.result == 'pass' %}bg-success{% else %}bg-danger{% endif %}">
-                        {{ event.result }}
+<!-- tools/templates/tools/tool_history_modal.html -->
+<div class="history-container" data-tool-id="{{ data.tool.id }}">
+    <!-- ===== HEADER ===== -->
+    <div class="row">
+        <div class="col-md-12">
+            <h5 class="fw-bold">{{ data.tool.name }}</h5>
+            <p class="text-muted small mb-0">
+                <i class="bi bi-upc-scan"></i> N° série: <strong>{{ data.tool.serial_number }}</strong>
+                <span class="ms-2">
+                    <i class="bi bi-geo-alt"></i> Emplacement: {{ data.tool.location|default:"N/A" }}
+                </span>
+                <span class="ms-2">
+                    <span class="badge 
+                        {% if data.tool.status == 'active' %}bg-success
+                        {% elif data.tool.status == 'under_calibration' %}bg-warning text-dark
+                        {% elif data.tool.status == 'lost' %}bg-danger
+                        {% else %}bg-secondary{% endif %}">
+                        {{ data.tool.get_status_display }}
                     </span>
-                    {% if event.technician %}Technicien: {{ event.technician }}{% endif %}
-                    {% if event.next_date %}Prochaine: {{ event.next_date|date:"d/m/Y" }}{% endif %}
+                </span>
+                <span class="ms-2">
+                    <i class="bi bi-calendar3"></i> Prochain étalonnage: <strong>{{ data.tool.next_calibration }}</strong>
+                </span>
+            </p>
+        </div>
+    </div>
+
+    <hr>
+
+    <!-- ===== STATISTIQUES ===== -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="mb-0">{{ data.stats.total_calibrations }}</h5>
+                    <small class="text-muted">Total calibrations</small>
                 </div>
-            {% else %}
-                <div>
-                    {% if event.field %}
-                        <small>Champ: <strong>{{ event.field }}</strong></small>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="mb-0">{{ data.stats.last_calibration }}</h5>
+                    <small class="text-muted">Dernière calibration</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== FICHIERS PDF ===== -->
+    <div class="row g-3 mb-3">
+        <!-- Calibration PDF -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-file-earmark-pdf text-danger"></i> Traçabilité d'étalonnage</span>
+                    {% if data.files.calibration %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Uploadé</span>
+                    {% else %}
+                    <span class="badge bg-secondary"><i class="bi bi-clock"></i> En attente</span>
                     {% endif %}
-                    {% if event.old_value and event.new_value %}
-                        <div>
-                            <span class="text-danger">{{ event.old_value|default:"(vide)" }}</span>
-                            →
-                            <span class="text-success">{{ event.new_value|default:"(vide)" }}</span>
+                </div>
+                <div class="card-body">
+                    {% if data.files.calibration %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{{ data.files.calibration.url }}" target="_blank" class="text-primary fw-bold">
+                                    <i class="bi bi-file-earmark-pdf"></i> {{ data.files.calibration.name }}
+                                </a>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> {{ data.files.calibration.uploaded_at|default:"Date inconnue" }}
+                                    <br>
+                                    <i class="bi bi-person"></i> {{ data.files.calibration.uploaded_by|default:"Inconnu" }}
+                                    <br>
+                                    <i class="bi bi-hdd"></i> {{ data.files.calibration.size|filesizeformat }}
+                                </small>
+                            </div>
+                            {% if user.is_superuser %}
+                            <div>
+                                <button class="btn btn-sm btn-outline-danger delete-file-btn" 
+                                        data-tool-id="{{ data.tool.id }}" 
+                                        data-file-type="calibration"
+                                        title="Supprimer le fichier">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-file-earmark-pdf text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted small mb-0">Aucun fichier uploadé</p>
                         </div>
                     {% endif %}
-                    {% if event.description %}
-                        <small class="text-muted">{{ event.description }}</small>
+                    
+                    {% if user.is_superuser %}
+                    <!-- Formulaire d'upload -->
+                    <form class="upload-tracability-form mt-3" 
+                          data-tool-id="{{ data.tool.id }}" 
+                          data-file-type="calibration">
+                        {% csrf_token %}
+                        <div class="input-group input-group-sm">
+                            <input type="file" class="form-control" name="file" accept=".pdf" required>
+                            <button class="btn btn-primary btn-sm upload-btn" type="submit">
+                                <i class="bi bi-upload"></i> Upload
+                            </button>
+                        </div>
+                        <small class="text-muted">PDF uniquement, max 10MB</small>
+                    </form>
                     {% endif %}
                 </div>
-            {% endif %}
-            <small class="text-muted">
-                {% if event.user %}Par: {{ event.user }}{% endif %}
-            </small>
+            </div>
+        </div>
+        
+        <!-- Reception PDF -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-file-earmark-pdf text-danger"></i> Traçabilité de réception</span>
+                    {% if data.files.reception %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Uploadé</span>
+                    {% else %}
+                    <span class="badge bg-secondary"><i class="bi bi-clock"></i> En attente</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if data.files.reception %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{{ data.files.reception.url }}" target="_blank" class="text-primary fw-bold">
+                                    <i class="bi bi-file-earmark-pdf"></i> {{ data.files.reception.name }}
+                                </a>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> {{ data.files.reception.uploaded_at|default:"Date inconnue" }}
+                                    <br>
+                                    <i class="bi bi-person"></i> {{ data.files.reception.uploaded_by|default:"Inconnu" }}
+                                    <br>
+                                    <i class="bi bi-hdd"></i> {{ data.files.reception.size|filesizeformat }}
+                                </small>
+                            </div>
+                            {% if user.is_superuser %}
+                            <div>
+                                <button class="btn btn-sm btn-outline-danger delete-file-btn" 
+                                        data-tool-id="{{ data.tool.id }}" 
+                                        data-file-type="reception"
+                                        title="Supprimer le fichier">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="bi bi-file-earmark-pdf text-muted" style="font-size: 2rem;"></i>
+                            <p class="text-muted small mb-0">Aucun fichier uploadé</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if user.is_superuser %}
+                    <!-- Formulaire d'upload -->
+                    <form class="upload-tracability-form mt-3" 
+                          data-tool-id="{{ data.tool.id }}" 
+                          data-file-type="reception">
+                        {% csrf_token %}
+                        <div class="input-group input-group-sm">
+                            <input type="file" class="form-control" name="file" accept=".pdf" required>
+                            <button class="btn btn-primary btn-sm upload-btn" type="submit">
+                                <i class="bi bi-upload"></i> Upload
+                            </button>
+                        </div>
+                        <small class="text-muted">PDF uniquement, max 10MB</small>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
-    {% empty %}
-    <div class="text-center text-muted py-4">
-        <i class="bi bi-clock"></i>
-        <p>Aucun événement dans l'historique</p>
+
+    <!-- ===== TIMELINE - HISTORIQUE ===== -->
+    <h6 class="mt-3 fw-bold">
+        <i class="bi bi-clock-history"></i> Chronologie
+        <span class="badge bg-secondary ms-2">{{ data.timeline|length }} événements</span>
+    </h6>
+    
+    <div class="timeline" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+        {% for event in data.timeline %}
+        <div class="d-flex mb-3">
+            <div class="flex-shrink-0">
+                <span class="badge bg-secondary me-2" style="min-width: 100px; text-align: left;">
+                    {{ event.date|date:"d/m/Y H:i" }}
+                </span>
+            </div>
+            <div class="flex-grow-1">
+                <strong>
+                    {% if event.type == 'calibration' %}
+                        <span class="badge bg-success">✅ Calibration</span>
+                    {% elif event.type == 'created' %}
+                        <span class="badge bg-info">📝 Création</span>
+                    {% elif event.type == 'updated' %}
+                        <span class="badge bg-warning text-dark">✏️ Modification</span>
+                    {% elif event.type == 'status_changed' %}
+                        <span class="badge bg-secondary">🔄 Changement statut</span>
+                    {% elif event.type == 'calibrated' %}
+                        <span class="badge bg-success">✅ Calibration</span>
+                    {% elif event.type == 'calibration_tracability_uploaded' %}
+                        <span class="badge bg-purple text-white">📄 Upload PDF étalonnage</span>
+                    {% elif event.type == 'reception_tracability_uploaded' %}
+                        <span class="badge bg-purple text-white">📄 Upload PDF réception</span>
+                    {% elif event.type == 'calibration_tracability_deleted' %}
+                        <span class="badge bg-danger">🗑️ Suppression PDF étalonnage</span>
+                    {% elif event.type == 'reception_tracability_deleted' %}
+                        <span class="badge bg-danger">🗑️ Suppression PDF réception</span>
+                    {% else %}
+                        <span class="badge bg-light text-dark">{{ event.type }}</span>
+                    {% endif %}
+                </strong>
+                
+                {% if event.type == 'calibration' or event.type == 'calibrated' %}
+                    <div>
+                        Résultat: <span class="badge {% if event.result == 'Pass' or event.result == 'pass' %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ event.result }}
+                        </span>
+                        {% if event.technician %}
+                            <span class="ms-2">Technicien: {{ event.technician }}</span>
+                        {% endif %}
+                        {% if event.next_date %}
+                            <br>Prochaine: {{ event.next_date|date:"d/m/Y" }}
+                        {% endif %}
+                        {% if event.notes %}
+                            <br><small class="text-muted">{{ event.notes }}</small>
+                        {% endif %}
+                    </div>
+                {% elif event.type == 'updated' %}
+                    <div>
+                        {{ event.description }}
+                        {% if event.field %}
+                            <br><span class="text-muted">Champ: <strong>{{ event.field }}</strong></span>
+                        {% endif %}
+                        {% if event.old_value and event.new_value %}
+                            <div class="mt-1">
+                                <span class="text-danger">Ancien: {{ event.old_value|default:"(vide)"|truncatechars:30 }}</span>
+                                <span class="text-muted"> → </span>
+                                <span class="text-success">Nouveau: {{ event.new_value|default:"(vide)"|truncatechars:30 }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% elif 'tracability' in event.type %}
+                    <div>
+                        {{ event.description }}
+                        {% if event.file_name %}
+                            <br><span class="text-muted">📎 {{ event.file_name }}</span>
+                        {% endif %}
+                        {% if event.file_url %}
+                            <br><a href="{{ event.file_url }}" target="_blank" class="text-primary small">
+                                <i class="bi bi-eye"></i> Voir le fichier
+                            </a>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div>
+                        {{ event.description }}
+                        {% if event.field %}
+                            <br><span class="text-muted">Champ: <strong>{{ event.field }}</strong></span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
+                {% if event.user %}
+                    <div>
+                        <small class="text-muted">
+                            <i class="bi bi-person"></i> Par: {{ event.user }}
+                        </small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-4">
+            <i class="bi bi-clock" style="font-size: 2rem;"></i>
+            <p>Aucun événement dans l'historique</p>
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
+
+<style>
+.bg-purple {
+    background-color: #7c3aed;
+}
+.upload-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+.timeline::-webkit-scrollbar {
+    width: 6px;
+}
+.timeline::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+.timeline::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+.timeline::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ===== UPLOAD DE FICHIERS =====
+    document.querySelectorAll('.upload-tracability-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const toolId = this.dataset.toolId;
+            const fileType = this.dataset.fileType;
+            const fileInput = this.querySelector('input[type="file"]');
+            const uploadBtn = this.querySelector('.upload-btn');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Veuillez sélectionner un fichier');
+                return;
+            }
+            
+            if (!file.name.endsWith('.pdf') && file.type !== 'application/pdf') {
+                alert('Seuls les fichiers PDF sont acceptés');
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Le fichier ne doit pas dépasser 10MB');
+                return;
+            }
+            
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('csrfmiddlewaretoken', this.querySelector('[name="csrfmiddlewaretoken"]').value);
+            
+            fetch(`/tools/${toolId}/upload-tracability/${fileType}/`, {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Recharger le contenu de la modale
+                    const modalBody = document.querySelector('.modal-body');
+                    fetch(`/tools/${toolId}/history/`)
+                        .then(response => response.text())
+                        .then(html => {
+                            modalBody.innerHTML = html;
+                        });
+                    
+                    // Afficher un message de succès
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show mt-2';
+                    alertDiv.innerHTML = `
+                        ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    form.parentNode.insertBefore(alertDiv, form);
+                    setTimeout(() => alertDiv.remove(), 5000);
+                } else {
+                    alert('Erreur: ' + (data.error || 'Une erreur est survenue'));
+                }
+            })
+            .catch(error => {
+                alert('Erreur: ' + error.message);
+            })
+            .finally(() => {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Upload';
+            });
+        });
+    });
+    
+    // ===== SUPPRESSION DE FICHIERS =====
+    document.querySelectorAll('.delete-file-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            const toolId = this.dataset.toolId;
+            const fileType = this.dataset.fileType;
+            
+            if (!confirm('Voulez-vous vraiment supprimer ce fichier ?')) {
+                return;
+            }
+            
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name="csrfmiddlewaretoken"]').value);
+            
+            fetch(`/tools/${toolId}/delete-tracability/${fileType}/`, {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const modalBody = document.querySelector('.modal-body');
+                    fetch(`/tools/${toolId}/history/`)
+                        .then(response => response.text())
+                        .then(html => {
+                            modalBody.innerHTML = html;
+                        });
+                    alert(data.message);
+                } else {
+                    alert('Erreur: ' + (data.error || 'Une erreur est survenue'));
+                }
+            })
+            .catch(error => {
+                alert('Erreur: ' + error.message);
+            })
+            .finally(() => {
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-trash"></i>';
+            });
+        });
+    });
+});
+</script>

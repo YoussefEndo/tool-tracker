@@ -1,168 +1,251 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajouter un outil - Tool Calibration</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { font-family: 'Inter', sans-serif; }
-        body { background: #f0f4f8; }
-        .header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            padding: 20px 0;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #e94560;
-        }
-        .header h1 { color: white; font-weight: 800; font-size: 1.5rem; }
-        .header a { color: rgba(255,255,255,0.8); text-decoration: none; }
-        .header a:hover { color: white; }
-        .form-card {
-            border-radius: 16px;
-            border: none;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.06);
-            overflow: hidden;
-        }
-        .form-card .card-header {
-            background: white;
-            border-bottom: 1px solid #f3f4f6;
-            padding: 16px 24px;
-            font-weight: 600;
-        }
-        .form-label { font-weight: 500; font-size: 0.9rem; color: #374151; }
-        .form-control, .form-select {
-            border-radius: 10px;
-            border: 1px solid #e5e7eb;
-            padding: 10px 14px;
-            transition: all 0.2s ease;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            border: none;
-            border-radius: 10px;
-            padding: 12px 24px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
-        }
-        .btn-secondary {
-            border-radius: 10px;
-            padding: 12px 24px;
-            font-weight: 600;
-        }
-        .alert {
-            border-radius: 10px;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}Ajouter un outil - Tool Calibration{% endblock %}
 
-<div class="header">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h1><i class="bi bi-plus-circle"></i> Ajouter un outil</h1>
-            </div>
-            <div>
-                <a href="/tools/"><i class="bi bi-arrow-left"></i> Retour à la liste</a>
-            </div>
-        </div>
-    </div>
-</div>
+{% block extra_css %}
+<style>
+    .form-card {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+        overflow: hidden;
+    }
+    .form-card .card-header {
+        background: white;
+        border-bottom: 1px solid #f3f4f6;
+        padding: 16px 24px;
+        font-weight: 600;
+    }
+    .form-card .card-body {
+        padding: 24px;
+    }
+    .form-label {
+        font-weight: 500;
+        font-size: 0.85rem;
+        color: #374151;
+    }
+    .form-label .required {
+        color: #dc2626;
+        margin-left: 2px;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    .form-text {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    .btn-primary-custom {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 30px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+        color: white;
+    }
+    .btn-secondary-custom {
+        border-radius: 10px;
+        padding: 10px 30px;
+        font-weight: 600;
+        border: 1px solid #e5e7eb;
+        color: #6b7280;
+        transition: all 0.3s ease;
+    }
+    .btn-secondary-custom:hover {
+        background: #f8fafc;
+        color: #374151;
+    }
+    .section-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #f3f4f6;
+        padding-bottom: 8px;
+        margin-bottom: 16px;
+    }
+    .helper-text {
+        font-size: 0.7rem;
+        color: #9ca3af;
+        margin-top: 4px;
+    }
+</style>
+{% endblock %}
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="form-card card">
-                <div class="card-header">
-                    <i class="bi bi-tools text-primary me-2"></i> Nouvel outil
-                </div>
-                <div class="card-body p-4">
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="form-card card">
+            <div class="card-header">
+                <i class="bi bi-plus-circle text-primary me-2"></i> 
+                Nouvel outil
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
                     
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <!-- ===== SECTION 1 : INFORMATIONS EXCEL ===== -->
+                    <div class="mb-4">
+                        <h6 class="section-title"><i class="bi bi-table me-2"></i> Données Excel</h6>
+                        <div class="row g-3">
+                            <div class="col-md-2">
+                                <label class="form-label">LP</label>
+                                <input type="number" name="lp" class="form-control" placeholder="1" min="1">
                             </div>
-                        {% endfor %}
-                    {% endif %}
-                    
-                    <form method="post">
-                        {% csrf_token %}
-                        
+                            <div class="col-md-3">
+                                <label class="form-label">Internal Number</label>
+                                <input type="text" name="internal_number" class="form-control" placeholder="N000000001">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">GPN</label>
+                                <input type="text" name="gpn" class="form-control" placeholder="T2000000000001.000">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Tool Index</label>
+                                <input type="text" name="tool_index" class="form-control" placeholder="N*001">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Order No</label>
+                                <input type="text" name="order_no" class="form-control" placeholder="32000032">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== SECTION 2 : INFORMATIONS PRINCIPALES ===== -->
+                    <div class="mb-4">
+                        <h6 class="section-title"><i class="bi bi-tools me-2"></i> Informations principales</h6>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">Nom de l'outil *</label>
-                                <input type="text" name="name" class="form-control" required placeholder="Ex: Multimètre Fluke 87V">
+                                <label class="form-label">Nom de l'outil / Description <span class="required">*</span></label>
+                                <input type="text" name="description" class="form-control" placeholder="Ex: Cutter 726620/125H - Perschmann" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Numéro de série *</label>
-                                <input type="text" name="serial_number" class="form-control" required placeholder="Ex: FLUKE-87V-001">
+                                <label class="form-label">Numéro de série <span class="required">*</span></label>
+                                <input type="text" name="number" class="form-control" placeholder="Ex: 45-1" required>
                             </div>
-                            
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">Fabricant</label>
-                                <input type="text" name="manufacturer" class="form-control" placeholder="Ex: Fluke, Hoffmann, ...">
+                                <input type="text" name="manufacturer" class="form-control" placeholder="Ex: HOFFMANN, STAHLWILLE">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">Type d'outil</label>
-                                <input type="text" name="tool_type" class="form-control" placeholder="Ex: Multimètre, Pince, ...">
+                                <input type="text" name="tool_type" class="form-control" placeholder="Ex: standard hand tool, crimping tool">
                             </div>
-                            
-                            <div class="col-12">
-                                <label class="form-label">Description</label>
-                                <textarea name="description" class="form-control" rows="2" placeholder="Description détaillée de l'outil..."></textarea>
+                            <div class="col-md-4">
+                                <label class="form-label">Connector Number</label>
+                                <input type="text" name="connector_number" class="form-control" placeholder="Ex: 2242">
                             </div>
-                            
-                            <div class="col-md-6">
+                            <div class="col-md-12">
+                                <label class="form-label">Description détaillée</label>
+                                <textarea name="tool_description" class="form-control" rows="2" placeholder="Description complète de l'outil..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== SECTION 3 : LOCALISATION ET STATUT ===== -->
+                    <div class="mb-4">
+                        <h6 class="section-title"><i class="bi bi-geo-alt me-2"></i> Localisation et statut</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Emplacement</label>
-                                <input type="text" name="location" class="form-control" placeholder="Ex: Atelier A - Étagère 3">
+                                <input type="text" name="location" class="form-control" placeholder="Ex: Training center, Production">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Département</label>
+                                <input type="text" name="department" class="form-control" placeholder="Ex: Ba-Wu - Main wesser - LNVG">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Nom/Prénom</label>
+                                <input type="text" name="name_surname" class="form-control" placeholder="Responsable de l'outil">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Statut</label>
                                 <select name="status" class="form-select">
-                                    <option value="active">Actif</option>
+                                    <option value="active" selected>Actif</option>
                                     <option value="under_calibration">En calibration</option>
                                     <option value="lost">Perdu</option>
                                     <option value="down">Hors service</option>
                                 </select>
                             </div>
-                            
                             <div class="col-md-6">
-                                <label class="form-label">Prochain étalonnage *</label>
+                                <label class="form-label">Statut de réception</label>
+                                <input type="text" name="status_reception" class="form-control" placeholder="Ex: Received, In Customs">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== SECTION 4 : CALIBRATION ===== -->
+                    <div class="mb-4">
+                        <h6 class="section-title"><i class="bi bi-calendar-check me-2"></i> Calibration</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Première calibration</label>
+                                <input type="date" name="first_calibration" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Prochain étalonnage <span class="required">*</span></label>
                                 <input type="date" name="next_calibration_date" class="form-control" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">Fréquence d'étalonnage (mois)</label>
-                                <input type="number" name="calibration_frequency_months" class="form-control" value="6" min="1">
+                                <input type="number" name="calibration_frequency_months" class="form-control" value="6" min="1" max="60">
                             </div>
                         </div>
-                        
-                        <div class="mt-4 d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-check-lg"></i> Créer l'outil
-                            </button>
-                            <a href="/tools/" class="btn btn-secondary">
-                                <i class="bi bi-x-lg"></i> Annuler
-                            </a>
+                    </div>
+
+                    <!-- ===== SECTION 5 : TRAÇABILITÉ ===== -->
+                    <div class="mb-4">
+                        <h6 class="section-title"><i class="bi bi-file-text me-2"></i> Traçabilité</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Traçabilité d'étalonnage</label>
+                                <textarea name="calibration_tracability" class="form-control" rows="2" placeholder="Informations sur la traçabilité d'étalonnage..."></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Traçabilité de réception</label>
+                                <textarea name="reception_tracability" class="form-control" rows="2" placeholder="Informations sur la traçabilité de réception..."></textarea>
+                            </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+
+                    <!-- ===== SECTION 6 : COMMENTAIRES ===== -->
+                    <div class="mb-4">
+                        <h6 class="section-title"><i class="bi bi-chat me-2"></i> Commentaires</h6>
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label">Commentaires</label>
+                                <textarea name="comments" class="form-control" rows="2" placeholder="Commentaires supplémentaires..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== BOUTONS ===== -->
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a href="{% url 'tools:tool_list' %}" class="btn btn-secondary-custom">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary-custom">
+                            <i class="bi bi-check-circle"></i> Créer l'outil
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}
