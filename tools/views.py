@@ -895,6 +895,53 @@ def export_alerts_pdf(request):
 
 # ===== FONCTIONS D'IMPORT AVEC CSV =====
 
+# Known column names from the Excel template (used for auto-detecting the header row)
+KNOWN_IMPORT_COLUMNS = {'Number', 'Description', 'Manufacturer', 'Tool type', 'Location', 'GPN', 'LP', 'internal number'}
+
+
+def _detect_header_row(raw_bytes, encoding, delimiter=';'):
+    """Scan the first 10 rows to find which one contains known column names.
+    
+    Uses line-by-line parsing as the primary approach since metadata rows
+    (like SAP export headers) often have different column counts, which
+    causes pandas to fail or skip lines.
+    """
+    # Primary approach: line-by-line parsing (handles mixed column counts)
+    try:
+        text = raw_bytes.decode(encoding, errors='replace')
+        lines = text.split('\n')[:10]
+        for row_idx, line in enumerate(lines):
+            cells = [c.strip() for c in line.split(delimiter) if c.strip()]
+            if set(cells) & KNOWN_IMPORT_COLUMNS:
+                return row_idx
+    except Exception:
+        pass
+    return 0
+
+
+def _parse_date(value):
+    """Try to parse a date string in multiple formats, return a date or None."""
+    if value is None:
+        return None
+    if isinstance(value, (date, datetime, pd.Timestamp)):
+        if isinstance(value, pd.Timestamp):
+            return value.date()
+        if isinstance(value, datetime):
+            return value.date()
+        return value
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    if not value:
+        return None
+    for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%d.%m.%Y', '%Y/%m/%d'):
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
 @login_required
 def download_template_excel(request):
     """Télécharger le template Excel pour l'import"""
@@ -1047,18 +1094,42 @@ def import_tools(request):
                 raw_data = excel_file.read()
                 result = chardet.detect(raw_data)
                 encoding = result['encoding'] or 'utf-8'
+                
+                # Auto-detect header row and delimiter
+                sep = ';'
+                header_row = _detect_header_row(raw_data, encoding, ';')
+                if header_row == 0:
+                    # Maybe it uses comma delimiter instead
+                    header_row_comma = _detect_header_row(raw_data, encoding, ',')
+                    if header_row_comma > 0:
+                        header_row = header_row_comma
+                        sep = ','
+                
+                excel_file.seek(0)
+                try:
+                    df = pd.read_csv(excel_file, encoding=encoding, sep=sep, header=header_row)
+                except Exception:
+                    excel_file.seek(0)
+                    df = pd.read_csv(excel_file, encoding='utf-8', sep=';', header=0)
+            else:
+                # For Excel files, try to auto-detect header row
+                raw_data = excel_file.read()
                 excel_file.seek(0)
                 
+                # Read first 10 rows without header to find the right row
                 try:
-                    df = pd.read_csv(excel_file, encoding=encoding, sep=';', header=3)
-                except:
-                    excel_file.seek(0)
-                    try:
-                        df = pd.read_csv(excel_file, encoding=encoding, sep=',', header=3)
-                    except:
-                        df = pd.read_csv(excel_file, encoding='utf-8', sep=';', header=3)
-            else:
-                df = pd.read_excel(excel_file, header=3)
+                    preview_df = pd.read_excel(io.BytesIO(raw_data), header=None, nrows=10, dtype=str)
+                    header_row = 0
+                    for row_idx in range(len(preview_df)):
+                        cell_values = set(str(v).strip() for v in preview_df.iloc[row_idx].tolist() if pd.notna(v))
+                        if cell_values & KNOWN_IMPORT_COLUMNS:
+                            header_row = row_idx
+                            break
+                except Exception:
+                    header_row = 0
+                
+                excel_file.seek(0)
+                df = pd.read_excel(excel_file, header=header_row)
             
             df.columns = df.columns.str.strip()
             
@@ -1111,10 +1182,14 @@ def import_tools(request):
             
             preview_data = data_records[:5] if len(data_records) >= 5 else data_records
             
+            # Reverse mapping: django_field -> original Excel column name
+            column_display = {django: excel for excel, django in existing_columns.items()}
+            
             context = {
                 'step': 'mapping',
                 'columns': list(df_filtered.columns),
                 'original_columns': list(existing_columns.keys()),
+                'column_display': column_display,
                 'preview': preview_data,
                 'total_rows': len(df_filtered),
                 'file_name': excel_file.name,
@@ -1166,11 +1241,8 @@ def process_import(request):
             tool_data = {}
             for field, column in field_mapping.items():
                 value = row_data.get(column)
-                if isinstance(value, str) and field in ['next_calibration_date', 'first_calibration']:
-                    try:
-                        value = datetime.strptime(value, '%Y-%m-%d').date()
-                    except:
-                        value = None
+                if field in ['next_calibration_date', 'first_calibration']:
+                    value = _parse_date(value)
                 tool_data[field] = value
             
             if not tool_data.get('description') or not tool_data.get('number'):

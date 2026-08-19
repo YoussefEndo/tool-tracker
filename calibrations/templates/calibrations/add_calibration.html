@@ -125,7 +125,7 @@
                         {% endfor %}
                     {% endif %}
                     
-                    <form method="post">
+                    <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         
                         <div class="row g-3">
@@ -158,6 +158,12 @@
                             <div class="col-md-6">
                                 <label class="form-label">Notes</label>
                                 <textarea name="notes" class="form-control" rows="3" placeholder="Commentaires sur la calibration..."></textarea>
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <label class="form-label"><i class="bi bi-file-earmark-pdf text-danger"></i> Traçabilité d'étalonnage (PDF)</label>
+                                <input type="file" name="calibration_pdf" class="form-control" accept=".pdf">
+                                <small class="text-muted">Optionnel - PDF uniquement, max 10MB</small>
                             </div>
                         </div>
                         

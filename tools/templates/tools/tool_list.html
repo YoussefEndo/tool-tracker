@@ -318,7 +318,20 @@
                                 <span class="badge bg-secondary"><i class="bi bi-check-lg"></i> OK</span>
                             {% endif %}
                         </td>
-                        <td>{{ tool.location|default:"-" }}</td>
+                        <td onclick="event.stopPropagation();">
+                            <div class="d-flex align-items-center gap-1">
+                                <span>{{ tool.location|default:"-" }}</span>
+                                <button class="btn btn-sm p-0 border-0 bg-transparent" style="line-height: 1;" 
+                                        onclick="event.stopPropagation(); openReceptionModal({{ tool.id }}, '{{ tool.location|default:"-"|escapejs }}'{% if tool.reception_pdf %}, true, '{{ tool.reception_pdf.url|escapejs }}', '{{ tool.reception_pdf.name|escapejs }}', '{{ tool.reception_pdf_uploaded_at|date:"d/m/Y H:i"|default:"N/A"|escapejs }}', '{{ tool.reception_pdf_uploaded_by|default:"N/A"|escapejs }}'{% else %}, false{% endif %})"
+                                        title="Traçabilité de réception">
+                                    {% if tool.reception_pdf %}
+                                        <i class="bi bi-file-earmark-pdf text-danger"></i>
+                                    {% else %}
+                                        <i class="bi bi-file-earmark-plus text-muted"></i>
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </td>
                         <td class="action-cell" onclick="event.stopPropagation();">
                             <div class="d-flex gap-1 flex-wrap">
                                 <a href="/calibrations/add/{{ tool.id }}/" class="btn btn-success btn-sm" title="Calibrer">
@@ -407,6 +420,23 @@
     </div>
 </div>
 
+<!-- ===== MODAL TRACABILITÉ RÉCEPTION ===== -->
+<div class="modal fade" id="receptionModal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content rounded-4">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-file-earmark-pdf text-danger"></i> Traçabilité de réception</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="receptionContent">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSRF token for AJAX -->
+{% csrf_token %}
+
 {% endblock %}
 
 {% block extra_js %}
@@ -494,6 +524,128 @@ function showHistory(toolId) {
                 </div>
             `;
         });
+}
+
+function openReceptionModal(toolId, location, hasPdf, pdfUrl, pdfName, uploadedAt, uploadedBy) {
+    const modal = new bootstrap.Modal(document.getElementById('receptionModal'));
+    const content = document.getElementById('receptionContent');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    let fileSection = '';
+    if (hasPdf) {
+        fileSection = `
+            <div class="p-3 bg-light rounded-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="${pdfUrl}" target="_blank" class="text-primary fw-bold">
+                            <i class="bi bi-file-earmark-pdf"></i> ${pdfName}
+                        </a>
+                        <br>
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> ${uploadedAt}
+                            <br>
+                            <i class="bi bi-person"></i> ${uploadedBy}
+                        </small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteReceptionPdf(${toolId}, '${csrfToken}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    } else {
+        fileSection = `
+            <div class="text-center py-3 mb-3">
+                <i class="bi bi-file-earmark-x text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted small mb-0">Aucun fichier uploadé</p>
+            </div>
+        `;
+    }
+    
+    content.innerHTML = `
+        <div class="text-center mb-3">
+            <i class="bi bi-geo-alt text-primary" style="font-size: 2rem;"></i>
+            <h6 class="mt-2">${location}</h6>
+        </div>
+        
+        ${fileSection}
+        
+        <form id="receptionUploadForm" enctype="multipart/form-data">
+            <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+            <div class="input-group input-group-sm">
+                <input type="file" class="form-control" name="file" accept=".pdf" required id="receptionFileInput">
+                <button class="btn btn-primary btn-sm" type="submit" id="receptionUploadBtn">
+                    <i class="bi bi-upload"></i> Upload
+                </button>
+            </div>
+            <small class="text-muted">PDF uniquement, max 10MB</small>
+        </form>
+    `;
+    
+    // Handle upload
+    document.getElementById('receptionUploadForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('receptionFileInput');
+        const uploadBtn = document.getElementById('receptionUploadBtn');
+        const file = fileInput.files[0];
+        
+        if (!file) { alert('Veuillez sélectionner un fichier'); return; }
+        if (!file.name.endsWith('.pdf') && file.type !== 'application/pdf') {
+            alert('Seuls les fichiers PDF sont acceptés'); return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Le fichier ne doit pas dépasser 10MB'); return;
+        }
+        
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        
+        fetch(`/tools/${toolId}/upload-tracability/reception/`, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                modal.hide();
+                location.reload();
+            } else {
+                alert('Erreur: ' + (data.error || 'Une erreur est survenue'));
+            }
+        })
+        .catch(err => alert('Erreur: ' + err.message))
+        .finally(() => {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Upload';
+        });
+    });
+    
+    modal.show();
+}
+
+function deleteReceptionPdf(toolId, csrfToken) {
+    if (!confirm('Voulez-vous vraiment supprimer ce fichier ?')) return;
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    fetch(`/tools/${toolId}/delete-tracability/reception/`, {
+        method: 'POST',
+        body: formData,
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erreur: ' + (data.error || 'Une erreur est survenue'));
+        }
+    })
+    .catch(err => alert('Erreur: ' + err.message));
 }
 </script>
 {% endblock %}

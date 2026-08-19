@@ -360,24 +360,36 @@
                             {% for field in columns %}
                             <div class="col-md-4">
                                 <div class="p-2 border rounded-3 bg-light">
-                                    <label class="form-label small fw-bold mb-1">{{ field }}</label>
+                                    <label class="form-label small fw-bold mb-1">
+                                        {{ field }}
+                                        {% if column_display %}
+                                        <span class="text-muted fw-normal">({{ column_display|get_item:field|default:field }})</span>
+                                        {% endif %}
+                                    </label>
                                     <select name="map_{{ field }}" class="mapping-select">
                                         <option value="">-- Ignorer --</option>
-                                        <option value="{{ field }}">Même nom</option>
-                                        <option value="description">Description</option>
-                                        <option value="number">Number</option>
-                                        <option value="manufacturer">Manufacturer</option>
-                                        <option value="tool_type">Tool type</option>
-                                        <option value="location">Location</option>
-                                        <option value="next_calibration_date">Next calibration date</option>
-                                        <option value="first_calibration">First calibration</option>
-                                        <option value="department">Department</option>
+                                        <option value="{{ field }}" selected>Même nom</option>
+                                        <option value="lp">LP</option>
                                         <option value="internal_number">Internal number</option>
                                         <option value="gpn">GPN</option>
-                                        <option value="lp">LP</option>
+                                        <option value="tool_type">Tool type</option>
+                                        <option value="tool_index">Tool index</option>
+                                        <option value="number">Number</option>
+                                        <option value="description">Description</option>
+                                        <option value="manufacturer">Manufacturer</option>
+                                        <option value="tool_description">Tool description</option>
+                                        <option value="connector_number">Connector of number</option>
+                                        <option value="first_calibration">First calibration</option>
+                                        <option value="next_calibration_date">Next calibration date</option>
+                                        <option value="department">Department</option>
+                                        <option value="calibration_tracability">Calibration tracability</option>
+                                        <option value="reception_tracability">Reception tracability</option>
+                                        <option value="name_surname">Name, surname</option>
+                                        <option value="location">Location</option>
                                         <option value="comments">Comments</option>
+                                        <option value="order_no">Order No</option>
                                         <option value="status_reception">Status reception</option>
-                                        <option value="validation_status">validation satus</option>
+                                        <option value="validation_status">Validation status</option>
                                     </select>
                                 </div>
                             </div>

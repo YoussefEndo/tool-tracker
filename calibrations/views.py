@@ -5,6 +5,8 @@ from django.db.models import Q
 from tools.models import Tool, ToolHistory
 from .models import Calibration
 from datetime import date, timedelta
+from datetime import datetime
+
 
 @login_required
 def add_calibration(request, tool_id):
@@ -42,6 +44,35 @@ def add_calibration(request, tool_id):
             tool.status = 'active'
         else:
             tool.status = 'down'
+        
+        # Gérer l'upload du fichier de tracabilité d'étalonnage
+        calibration_pdf = request.FILES.get('calibration_pdf')
+        if calibration_pdf:
+            if not calibration_pdf.name.endswith('.pdf'):
+                messages.warning(request, "Le fichier de tracabilité doit être un PDF. Fichier ignoré.")
+            elif calibration_pdf.size > 10 * 1024 * 1024:
+                messages.warning(request, "Le fichier ne doit pas dépasser 10MB. Fichier ignoré.")
+            else:
+                tool.calibration_pdf = calibration_pdf
+                tool.calibration_pdf_uploaded_at = datetime.now()
+                tool.calibration_pdf_uploaded_by = request.user
+                
+                # Log de l'action
+                ToolHistory.objects.create(
+                    tool=tool,
+                    user=request.user,
+                    action='calibration_tracability_uploaded',
+                    description=f"Fichier de tracabilité d'étalonnage uploadé lors de la calibration par {request.user.username}",
+                    field_name='calibration_pdf',
+                    new_value=calibration_pdf.name,
+                    file_name=calibration_pdf.name,
+                    file_url='',
+                    ip_address=request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '')),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+                
+                messages.success(request, "📄 Fichier de tracabilité d'étalonnage uploadé avec succès")
+        
         tool.save()
         
         # Créer l'historique
@@ -55,7 +86,7 @@ def add_calibration(request, tool_id):
             new_value=calibration_date
         )
         
-        messages.success(request, f"Calibration enregistrée pour {tool.name}")
+        messages.success(request, f"Calibration enregistrée pour {tool.description}")
         return redirect('tools:tool_list')
     
     return render(request, 'calibrations/add_calibration.html', {'tool': tool})
